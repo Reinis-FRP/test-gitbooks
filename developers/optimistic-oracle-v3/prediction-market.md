@@ -233,10 +233,10 @@ export REQUIRED_BOND=$(cast --to-wei 5000)
 We need to mint the amount of asserter rewards and approve them before creating the market:
 
 ```bash
-cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" \
-	$DEPLOYER_WALLET $REWARD
-cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" \
-	$PREDICTION_MARKET_ADDRESS $REWARD
+cast send --mnemonic "$MNEMONIC" \
+	$DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" $DEPLOYER_WALLET $REWARD
+cast send --mnemonic "$MNEMONIC" \
+	$DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" $PREDICTION_MARKET_ADDRESS $REWARD
 ```
 
 Then we are ready to initialise the market with the `DEPLOYER_WALLET`
@@ -262,10 +262,10 @@ Then we can mint the necessary tokens to then create the outcome tokens:
 
 ```bash
 export AMOUNT=$(cast --to-wei 10000)
-cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" \
-	$DEPLOYER_WALLET $AMOUNT
-cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" \
-	$PREDICTION_MARKET_ADDRESS $AMOUNT
+cast send --mnemonic "$MNEMONIC" \
+	$DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" $DEPLOYER_WALLET $AMOUNT
+cast send --mnemonic "$MNEMONIC" \
+	$DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" $PREDICTION_MARKET_ADDRESS $AMOUNT
 ```
 
 We can now create the outcome tokens. With an amount `10000` units of `DEFAULT_CURRENCY` we get `10000` `OUTCOME_TOKEN_ONE` and 10000 `OUTCOME_TOKEN_TWO`
@@ -309,22 +309,22 @@ Now, let's simulate how the `DEPLOYER_WALLET` would trade one position of the ma
 
 ```bash
 cast send \
-	---mnemonic "$MNEMONIC" \
+	--mnemonic "$MNEMONIC" \
 	$OUTCOME_TOKEN_ONE_ADDRESS "transfer(address,uint256)" $USER_WALLET $(cast --to-wei 5000)
 ```
 
-At this point, let's imagine that the match between The Glacial Storms and the Electric Titans has taken place and that The Glacial Storms won. Then anyone can now `assert` that this has occoured by calling `assertMarket` with outcome `"yes"` as the claim defined in `DESCRIPTION` is true. We can do it, from the `ASSERTER_WALLET`, by running the following command:
+At this point, let's imagine that the match between The Glacial Storms and the Electric Titans has taken place and that The Glacial Storms won. Then anyone can now `assert` that this has occurred by calling `assertMarket` with outcome `"yes"` as the claim defined in `DESCRIPTION` is true. We can do it, from the `ASSERTER_WALLET`, by running the following command:
 
 ```bash
-cast send --private-key "$PRIVATE_KEY_ONE" $DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" $ASSERTER_WALLET $REQUIRED_BOND
-cast send --private-key "$PRIVATE_KEY_THREE" $DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" $PREDICTION_MARKET_ADDRESS $REQUIRED_BOND
-
+cast send --mnemonic "$MNEMONIC" \
+	$DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" $ASSERTER_WALLET $REQUIRED_BOND
+cast send --mnemonic "$MNEMONIC" --mnemonic-index $ASSERTER_ID \
+	$DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" $PREDICTION_MARKET_ADDRESS $REQUIRED_BOND
 export ASSERTION_TX=$(cast send \
---private-key "$PRIVATE_KEY_THREE" \
---json \
-$PREDICTION_MARKET_ADDRESS "assertMarket(bytes32,string)" $MARKET_ID "yes" \
-| jq -r .transactionHash)
-
+	--mnemonic "$MNEMONIC" --mnemonic-index $ASSERTER_ID \
+	--json \
+	$PREDICTION_MARKET_ADDRESS "assertMarket(bytes32,string)" $MARKET_ID "yes" \
+	| jq -r .transactionHash)
 export ASSERTION_ID=$(cast receipt --json $ASSERTION_TX | jq -r .logs[-1].topics[2])
 ```
 
@@ -332,45 +332,45 @@ Now, let's move forward 2 hours to go pass the challenge window of the assertion
 
 ```bash
 cast rpc evm_increaseTime 7200
-cast rpc evm_min
+cast rpc evm_mine
 ```
 
-No the assertion can be settled in the `OptimisticOracleV3`. We can do it by running the following command:
+Now the assertion can be settled in the `OptimisticOracleV3`. We can do it by running the following command:
 
 ```bash
-cast send \
---private-key "$PRIVATE_KEY_ONE" \
-$OOV3_ADDRESS "settleAssertion(bytes32)" $ASSERTION_ID
+cast send --mnemonic "$MNEMONIC" \
+	$OOV3_ADDRESS "settleAssertion(bytes32)" $ASSERTION_ID
 ```
 
 We can now check how the `ASSERTER_WALLET` has received back the assertion bond plus the reward:
 
 ```bash
-echo "ASSERTER WALLET BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS "balanceOf(address)(uint256)" $ASSERTER_WALLET)
+echo "ASSERTER WALLET BALANCE DEFAULT_CURRENCY" \
+	$(cast call $DEFAULT_CURRENCY_ADDRESS "balanceOf(address)(uint256)" $ASSERTER_WALLET)
 ```
 
 Now, both the `DEPLOYER_WALLET` and `USER_WALLET` can settle their outcome tokens:
 
 ```bash
-cast send \
---private-key "$PRIVATE_KEY_ONE" \
-$PREDICTION_MARKET_ADDRESS "settleOutcomeTokens(bytes32)" $MARKET_ID
-
-cast send \
---private-key "$PRIVATE_KEY_TWO" \
-$PREDICTION_MARKET_ADDRESS "settleOutcomeTokens(bytes32)" $MARKET_ID
+cast send --mnemonic "$MNEMONIC" \
+	$PREDICTION_MARKET_ADDRESS "settleOutcomeTokens(bytes32)" $MARKET_ID
+cast send --mnemonic "$MNEMONIC" --mnemonic-index $USER_ID \
+	$PREDICTION_MARKET_ADDRESS "settleOutcomeTokens(bytes32)" $MARKET_ID
 ```
 
 Finally we can see how the `USER_WALLET` won the bet, as he got `OUTCOME_TOKEN_ONE` so he now has `5000 DEFAULT_CURRENCY` and the deployer wallet only has `5000 DEFAULT_CURRENCY` from his initial 10000:
 
 ```bash
-echo "DEPLOYER WALLET BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
-echo "DEPLOYER WALLET BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
-echo "DEPLOYER WALLET BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
-
-echo "USER WALLET BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS "balanceOf(address)(uint256)" $USER_WALLET)
-echo "USER WALLET BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS "balanceOf(address)(uint256)" $USER_WALLET)
-echo "USER WALLET BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS "balanceOf(address)(uint256)" $USER_WALLET)
+echo "DEPLOYER WALLET BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "DEPLOYER WALLET BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "DEPLOYER WALLET BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "USER WALLET BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS \
+	"balanceOf(address)(uint256)" $USER_WALLET)
+echo "USER WALLET BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS \
+	"balanceOf(address)(uint256)" $USER_WALLET)
+echo "USER WALLET BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS \
+	"balanceOf(address)(uint256)" $USER_WALLET)
 ```
-
-\
