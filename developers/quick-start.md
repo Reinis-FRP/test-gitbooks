@@ -6,19 +6,19 @@ description: 0 to 1 integration with the Optimistic Oracle V3.
 
 The primary integration point into the UMA ecosystem is the Optimistic Oracle V3 (OOV3). The OOV3 is an _**oracle for arbitrary off-chain data**_ which leverages an interactive escalation game between _asserters_ and _disputers_ and is secured by _economic incentives_. It differs from the Optimistic Oracle V2 (getting started can be found [here](optimistic-oracle/getting-started.md)) by being easier to reason about and simpler in integration points.
 
-This getting started tutorial will show you how to go from 0 to 1 with the OOV3 by executing the simplest possible assertion flow. Later in the docs you can find more information on how the OOV3 works and dig deeper into its mechanism and more sophisticated code examples.&#x20;
+This getting started tutorial will show you how to go from 0 to 1 with the OOV3 by executing the simplest possible assertion flow. Later in the docs you can find more information on how the OOV3 works and dig deeper into its mechanism and more sophisticated code examples.
 
 ### **A minimum viable OOV3 integration**
 
-The OOV3 works by making a truth claim about the world, stating that something has happened or is true. Once asserted, the assertion enters a challenge period wherein someone can disagree with the assertion, by disputing it. If no one disputes it during the challenge window the statement is taken as true. If disputed, the outcome is arbitrated using the UMA DVM (more info on how this works here).&#x20;
+The OOV3 works by making a truth claim about the world, stating that something has happened or is true. Once asserted, the assertion enters a challenge period wherein someone can disagree with the assertion, by disputing it. If no one disputes it during the challenge window the statement is taken as true. If disputed, the outcome is arbitrated using the UMA DVM (more info on how this works here).
 
-In this tutorial you will be working through a simple smart contract that asserts the following truth: `Statement: Argentina won the 2022 Fifa world cup in Qatar.`&#x20;
+In this tutorial you will be working through a simple smart contract that asserts the following truth: `Statement: Argentina won the 2022 Fifa world cup in Qatar.`
 
-Once through the challenge window, you will use the assertion in your resolution contract. This shows the full non-dispute lifecycle of an OOV3 data assertion. It will give you the basic intuition as to how the Optimistic Asserter works without much overhead and is a great starting point before digging deeper.  Let's get started!
+Once through the challenge window, you will use the assertion in your resolution contract. This shows the full non-dispute lifecycle of an OOV3 data assertion. It will give you the basic intuition as to how the Optimistic Asserter works without much overhead and is a great starting point before digging deeper. Let's get started!
 
 ### **Prerequisites**
 
-To complete this tutorial you will need**:**
+To complete this tutorial you will need\*\*:\*\*
 
 1. Metamask installed in a Chromium based browser (such as [Google Chrome](https://www.google.com/chrome/)) If you don't have it already, you can get Metamask [here](https://metamask.io/).
 2. A wallet set up in Metamask.
@@ -26,7 +26,7 @@ To complete this tutorial you will need**:**
 
 ### Asserting a truth
 
-First, we will work through the basic flow for _asserting a truth to the oracle_. In this example, we are making a statement about the outcome of a sports event, but the statement could be much more complex; it could power any kind of smart contract system requiring data.&#x20;
+First, we will work through the basic flow for _asserting a truth to the oracle_. In this example, we are making a statement about the outcome of a sports event, but the statement could be much more complex; it could power any kind of smart contract system requiring data.
 
 The contract used in this tutorial is meant to be a simple data assertion flow. The contract exposes a simple `assertTruth` function which asserts the truth to the OA about the outcome of the world cup.
 
@@ -50,7 +50,15 @@ Once the assertion has settled, and assuming no one has disputed it, we can sett
 2. Wait for the transaction to mine.
 3. Once mined you can expand the transaction output block inline with the green tick arrow. If you scroll down here you can find some information about the assertion, such as the settlement value (which should be `true` as it was not disputed).
 
+<div>
+
+<figure><img src="../.gitbook/assets/2023-02-02%20at%2014.39.21@2x.png" alt=""><figcaption></figcaption></figure>
+
+ 
+
 <figure><img src="../.gitbook/assets/2023-02-02 at 14.39.21@2x.png" alt=""><figcaption></figcaption></figure>
+
+</div>
 
 4. Now, you can call `getAssertion` and `getAssertionResult` from remix and see the outputs. `getAssertion` has changed such the `settled` value is `true` and `getAssertionResult` now returns `true` as the assertion was deemed valid as it was not disputed.
 
