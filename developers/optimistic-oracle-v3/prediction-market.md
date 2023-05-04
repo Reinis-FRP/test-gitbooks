@@ -271,8 +271,7 @@ cast send --mnemonic "$MNEMONIC" \
 We can now create the outcome tokens. With an amount `10000` units of `DEFAULT_CURRENCY` we get `10000` `OUTCOME_TOKEN_ONE` and 10000 `OUTCOME_TOKEN_TWO`
 
 ```bash
-cast send \
-	--mnemonic "$MNEMONIC" \
+cast send --mnemonic "$MNEMONIC" \
 	$PREDICTION_MARKET_ADDRESS "createOutcomeTokens(bytes32,uint256)" $MARKET_ID $AMOUNT
 ```
 
@@ -288,8 +287,7 @@ echo "BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS \
 At any point before the market is settled we can redeem outcome tokens. By redeeming an amount we are burning the same amount of `OUTCOME_TOKEN_ONE` and `OUTCOME_TOKEN_TWO` to receive that amount of `DEFAULT_CURRENCY`
 
 ```bash
-cast send \
-	--mnemonic "$MNEMONIC" \
+cast send --mnemonic "$MNEMONIC" \
 	$PREDICTION_MARKET_ADDRESS "redeemOutcomeTokens(bytes32,uint256)" \
 	$MARKET_ID $(cast --to-wei 5000)
 ```
@@ -308,8 +306,7 @@ echo "BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS \
 Now, let's simulate how the `DEPLOYER_WALLET` would trade one position of the market by transferring the remaining 5000  `OUTCOME_TOKEN_ONE` to another user. By doing this, `DEPLOYER_WALLET` is now only exposed to the outcome two ("no") because he only holds `OUTCOME_TOKEN_TWO`. On the other side, `USER_WALLET` is exposed to the outcome one ("yes") as he has traded some other currency against `OUTCOME_TOKEN_ONE`. This trade is out of the scope of this example, thats why we simulate it by running the following transfer:
 
 ```bash
-cast send \
-	--mnemonic "$MNEMONIC" \
+cast send --mnemonic "$MNEMONIC" \
 	$OUTCOME_TOKEN_ONE_ADDRESS "transfer(address,uint256)" $USER_WALLET $(cast --to-wei 5000)
 ```
 
