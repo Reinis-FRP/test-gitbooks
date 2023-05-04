@@ -233,69 +233,84 @@ export REQUIRED_BOND=$(cast --to-wei 5000)
 We need to mint the amount of asserter rewards and approve them before creating the market:
 
 ```bash
-cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" $DEPLOYER_WALLET $REWARD
-cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" $PREDICTION_MARKET_ADDRESS $REWARD
+cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" \
+	$DEPLOYER_WALLET $REWARD
+cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" \
+	$PREDICTION_MARKET_ADDRESS $REWARD
 ```
 
 Then we are ready to initialise the market with the `DEPLOYER_WALLET`
 
 ```bash
 export MARKET_ID_TX=$(cast send \
---private-key "$PRIVATE_KEY_ONE" \
---json \
-$PREDICTION_MARKET_ADDRESS "initializeMarket(string,string,string,uint256,uint256)(bytes32)" $OUTCOME_ONE $OUTCOME_TWO $DESCRIPTION $REWARD $REQUIRED_BOND \
-| jq -r .transactionHash)
-
+	--mnemonic "$MNEMONIC" \
+	--json \
+	$PREDICTION_MARKET_ADDRESS \
+	"initializeMarket(string,string,string,uint256,uint256)(bytes32)" \
+	$OUTCOME_ONE $OUTCOME_TWO "$DESCRIPTION" $REWARD $REQUIRED_BOND \
+	| jq -r .transactionHash)
 export MARKET_ID=$(cast receipt --json $MARKET_ID_TX | jq -r .logs[-1].topics[1])
-
-export OUTCOME_TOKEN_ONE_ADDRESS=$(cast --abi-decode "MarketInitializedNonIndexed()(string,string,string,address,address,uint256,uint256)" $(cast receipt --json $MARKET_ID_TX | jq -r .logs[-1].data) | awk 'NR==4 {print $1}')
-export OUTCOME_TOKEN_TWO_ADDRESS=$(cast --abi-decode "MarketInitializedNonIndexed()(string,string,string,address,address,uint256,uint256)" $(cast receipt --json $MARKET_ID_TX | jq -r .logs[-1].data) | awk 'NR==5 {print $1}')
+export OUTCOME_TOKEN_ONE_ADDRESS=$(cast --abi-decode \
+	"MarketInitializedNonIndexed()(string,string,string,address,address,uint256,uint256)" \
+	$(cast receipt --json $MARKET_ID_TX | jq -r .logs[-1].data) | awk 'NR==4 {print $1}')
+export OUTCOME_TOKEN_TWO_ADDRESS=$(cast --abi-decode \
+	"MarketInitializedNonIndexed()(string,string,string,address,address,uint256,uint256)" \
+	$(cast receipt --json $MARKET_ID_TX | jq -r .logs[-1].data) | awk 'NR==5 {print $1}')
 ```
 
 Then we can mint the necessary tokens to then create the outcome tokens:
 
 ```bash
 export AMOUNT=$(cast --to-wei 10000)
-cast send --private-key "$PRIVATE_KEY_ONE" $DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" $DEPLOYER_WALLET $AMOUNT
-cast send --private-key "$PRIVATE_KEY_ONE" $DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" $PREDICTION_MARKET_ADDRESS $AMOUNT
+cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" \
+	$DEPLOYER_WALLET $AMOUNT
+cast send --mnemonic "$MNEMONIC" $DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" \
+	$PREDICTION_MARKET_ADDRESS $AMOUNT
 ```
 
 We can now create the outcome tokens. With an amount `10000` units of `DEFAULT_CURRENCY` we get `10000` `OUTCOME_TOKEN_ONE` and 10000 `OUTCOME_TOKEN_TWO`
 
 ```bash
 cast send \
---private-key "$PRIVATE_KEY_ONE" \
-$PREDICTION_MARKET_ADDRESS "createOutcomeTokens(bytes32,uint256)" $MARKET_ID $AMOUNT
+	--mnemonic "$MNEMONIC" \
+	$PREDICTION_MARKET_ADDRESS "createOutcomeTokens(bytes32,uint256)" $MARKET_ID $AMOUNT
 ```
 
 ```bash
-echo "BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
-echo "BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
-echo "BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
 ```
 
 At any point before the market is settled we can redeem outcome tokens. By redeeming an amount we are burning the same amount of `OUTCOME_TOKEN_ONE` and `OUTCOME_TOKEN_TWO` to receive that amount of `DEFAULT_CURRENCY`
 
 ```bash
 cast send \
---private-key "$PRIVATE_KEY_ONE" \
-$PREDICTION_MARKET_ADDRESS "redeemOutcomeTokens(bytes32,uint256)" $MARKET_ID $(cast --to-wei 5000)
+	--mnemonic "$MNEMONIC" \
+	$PREDICTION_MARKET_ADDRESS "redeemOutcomeTokens(bytes32,uint256)" \
+	$MARKET_ID $(cast --to-wei 5000)
 ```
 
-After redeeming 5000 tokens we can see how both balances of `OUTCOME_TOKEN_ONE` and `OUTCOME_TOKEN_TWO` have decreased 5000 and `DEFAULT_CURRENCY` has increased that same amount.
+After redeeming 5000 tokens we can see how both balances of `OUTCOME_TOKEN_ONE` and `OUTCOME_TOKEN_TWO` have decreased by 5000 and `DEFAULT_CURRENCY` has increased that same amount.
 
 ```bash
-echo "BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
-echo "BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
-echo "BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS "balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "BALANCE OUTCOME TOKEN ONE" $(cast call $OUTCOME_TOKEN_ONE_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "BALANCE OUTCOME TOKEN TWO" $(cast call $OUTCOME_TOKEN_TWO_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
+echo "BALANCE DEFAULT_CURRENCY" $(cast call $DEFAULT_CURRENCY_ADDRESS \
+	"balanceOf(address)(uint256)" $DEPLOYER_WALLET)
 ```
 
 Now, let's simulate how the `DEPLOYER_WALLET` would trade one position of the market by transferring the remaining 5000  `OUTCOME_TOKEN_ONE` to another user. By doing this, `DEPLOYER_WALLET` is now only exposed to the outcome two ("no") because he only holds `OUTCOME_TOKEN_TWO`. On the other side, `USER_WALLET` is exposed to the outcome one ("yes") as he has traded some other currency against `OUTCOME_TOKEN_ONE`. This trade is out of the scope of this example, thats why we simulate it by running the following transfer:
 
 ```bash
 cast send \
---private-key "$PRIVATE_KEY_ONE" \
-$OUTCOME_TOKEN_ONE_ADDRESS "transfer(address,uint256)" $USER_WALLET $(cast --to-wei 5000)
+	---mnemonic "$MNEMONIC" \
+	$OUTCOME_TOKEN_ONE_ADDRESS "transfer(address,uint256)" $USER_WALLET $(cast --to-wei 5000)
 ```
 
 At this point, let's imagine that the match between The Glacial Storms and the Electric Titans has taken place and that The Glacial Storms won. Then anyone can now `assert` that this has occoured by calling `assertMarket` with outcome `"yes"` as the claim defined in `DESCRIPTION` is true. We can do it, from the `ASSERTER_WALLET`, by running the following command:
