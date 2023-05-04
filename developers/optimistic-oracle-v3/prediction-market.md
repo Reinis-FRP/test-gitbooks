@@ -314,9 +314,11 @@ At this point, let's imagine that the match between The Glacial Storms and the E
 
 ```bash
 cast send --mnemonic "$MNEMONIC" \
-	$DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" $ASSERTER_WALLET $REQUIRED_BOND
+	$DEFAULT_CURRENCY_ADDRESS "allocateTo(address,uint256)" \
+	$ASSERTER_WALLET $REQUIRED_BOND
 cast send --mnemonic "$MNEMONIC" --mnemonic-index $ASSERTER_ID \
-	$DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" $PREDICTION_MARKET_ADDRESS $REQUIRED_BOND
+	$DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" \
+	$PREDICTION_MARKET_ADDRESS $REQUIRED_BOND
 export ASSERTION_TX=$(cast send \
 	--mnemonic "$MNEMONIC" --mnemonic-index $ASSERTER_ID \
 	--json \
