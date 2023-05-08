@@ -209,8 +209,6 @@ Make sure the user addresses above have sufficient funding for the gas to execut
 
 #### Issue insurance
 
-Assuming [TestnetERC20](https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/common/implementation/TestnetERC20.sol) was used as `defaultCurrency` when deploying the Insurance contract, mint the required insurance amount (e.g. 10,000 TEST tokens) to the insurer and approve the Insurance contract to pull them:
-
 Make sure to have some amount of `DEFAULT_CURRENCY_ADDRESS` tokens to back potential insurance claim. If [0xe9448D94C9b033Ff50d3B14089043bD976fC1394](https://goerli.etherscan.io/address/0xe9448d94c9b033ff50d3b14089043bd976fc1394) was used on Goerli you can mint 10,000 DBT tokens to insurance issuer account:
 
 ```bash
@@ -253,7 +251,7 @@ export BOND_AMOUNT=$(cast call $OOV3_ADDRESS \
 	"getMinimumBond(address)(uint256)" $DEFAULT_CURRENCY_ADDRESS)
 ```
 
-This should be zero for [0xe9448D94C9b033Ff50d3B14089043bD976fC1394](https://goerli.etherscan.io/address/0xe9448d94c9b033ff50d3b14089043bd976fc1394) on Goerli, but in case of other currencies make sure to have this amount of `DEFAULT_CURRENCY_ADDRESS` both on insured account (for submitting the claim) and on insurer (for disputing the claim). If bond amount is non-zero, also make sure to add approval:
+This should be zero for [0xe9448D94C9b033Ff50d3B14089043bD976fC1394](https://goerli.etherscan.io/address/0xe9448d94c9b033ff50d3b14089043bd976fc1394) on Goerli, but in case of other currencies make sure to have this amount of `DEFAULT_CURRENCY_ADDRESS` both on the insured account (for submitting the claim) and on the insurer's account (for disputing the claim). If bond amount is non-zero, also make sure to add approval:
 
 ```bash
 cast send --mnemonic "$MNEMONIC" --mnemonic-index $INSURED_ID \
@@ -278,7 +276,7 @@ cast run $ASSERTION_TX
 
 #### Dispute insurance claim
 
-Before liveness passes, the insurer can dispute the claim through the Optimistic Oracle V3. In case of non-zero bond amount, they must add approval for Optimistic Oracle V3 to pull the bond:
+Before liveness passes, anyone (e.g. insurer) can dispute the claim through the Optimistic Oracle V3. In case of non-zero bond amount, they must add approval for Optimistic Oracle V3 to pull the bond:
 
 ```bash
 cast send --mnemonic "$MNEMONIC" --mnemonic-index $INSURER_ID \
@@ -319,10 +317,12 @@ export IDENTIFIER=$(cast call $INSURANCE_ADDRESS "defaultIdentifier()(bytes32)")
 export ASSERTION_TIME=$(cast block --json \
 	$(cast tx --json $ASSERTION_TX | jq -r .blockNumber) | jq -r .timestamp)
 export ANCILLARY_DATA=$(cast --from-utf8 $(echo assertionId:$(echo $ASSERTION_ID | sed 's/0x//' | tr [:upper:] [:lower:]),ooAsserter:$(echo $INSURED_ADDRESS | sed 's/0x//' | tr [:upper:] [:lower:])))
+
 export PRICE=$(cast --to-wei 1)
 cast send --mnemonic "$MNEMONIC" --mnemonic-index $INSURED_ID \
 	$MOCK_ORACLE_ADDRESS \
-	"pushPrice(bytes32,uint256,bytes,int256)" $IDENTIFIER $ASSERTION_TIME $ANCILLARY_DATA $PRICE
+	"pushPrice(bytes32,uint256,bytes,int256)" \
+	$IDENTIFIER $ASSERTION_TIME $ANCILLARY_DATA $PRICE
 ```
 {% endcode %}
 
