@@ -208,8 +208,8 @@ We are ready to deploy the `PredictionMarket` contract with the following comman
 
 ```bash
 export PREDICTION_MARKET_ADDRESS=$(forge create src/PredictionMarket.sol:PredictionMarket \
-	--mnemonic "$MNEMONIC" \
 	--json \
+	--mnemonic "$MNEMONIC" \
 	--constructor-args $FINDER_ADDRESS $DEFAULT_CURRENCY_ADDRESS $OOV3_ADDRESS \
 	| jq -r .deployedTo)
 echo "PREDICTION MARKET DEPLOYED TO" $PREDICTION_MARKET_ADDRESS
@@ -242,9 +242,8 @@ cast send --mnemonic "$MNEMONIC" \
 Then we are ready to initialise the market with the `DEPLOYER_WALLET`
 
 ```bash
-export MARKET_ID_TX=$(cast send \
+export MARKET_ID_TX=$(cast send --json \
 	--mnemonic "$MNEMONIC" \
-	--json \
 	$PREDICTION_MARKET_ADDRESS \
 	"initializeMarket(string,string,string,uint256,uint256)(bytes32)" \
 	$OUTCOME_ONE $OUTCOME_TWO "$DESCRIPTION" $REWARD $REQUIRED_BOND \
@@ -319,9 +318,8 @@ cast send --mnemonic "$MNEMONIC" \
 cast send --mnemonic "$MNEMONIC" --mnemonic-index $ASSERTER_ID \
 	$DEFAULT_CURRENCY_ADDRESS "approve(address,uint256)" \
 	$PREDICTION_MARKET_ADDRESS $REQUIRED_BOND
-export ASSERTION_TX=$(cast send \
+export ASSERTION_TX=$(cast send --json \
 	--mnemonic "$MNEMONIC" --mnemonic-index $ASSERTER_ID \
-	--json \
 	$PREDICTION_MARKET_ADDRESS "assertMarket(bytes32,string)" $MARKET_ID "yes" \
 	| jq -r .transactionHash)
 export ASSERTION_ID=$(cast receipt --json $ASSERTION_TX | jq -r .logs[-1].topics[2])
