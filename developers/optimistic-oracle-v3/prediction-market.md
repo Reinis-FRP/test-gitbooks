@@ -6,7 +6,7 @@ description: >-
 
 # 🕖 Prediction Market
 
-This section covers the [Prediction market contract](https://github.com/UMAprotocol/dev-quickstart-oov3/blob/master/src/PredictionMarket.sol), which is available in the Optimistic Oracle V3 [quick-start repo](https://github.com/UMAprotocol/dev-quickstart-oov3) and enables the creation of a binary prediction market using [Optimistic Oracle V3 (OOV3)](https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v3/implementation/OptimisticOracleV3.sol) assertions.
+This section covers the [Prediction Market contract](https://github.com/UMAprotocol/dev-quickstart-oov3/blob/master/src/PredictionMarket.sol), which is available in the Optimistic Oracle V3 [quick-start repo](https://github.com/UMAprotocol/dev-quickstart-oov3) and enables the creation of a binary prediction market using [Optimistic Oracle V3 (OOV3)](https://github.com/UMAprotocol/protocol/blob/master/packages/core/contracts/optimistic-oracle-v3/implementation/OptimisticOracleV3.sol) assertions.
 
 ### Prediction Market
 
@@ -63,7 +63,7 @@ To initialize the state variables of the contract, the constructor takes three p
 
 #### Market creation
 
-The `initializeMarket()` function is used to create a new market in the `PredictionMarket` contract.
+The `initializeMarket()` function is used to create a new market in the Prediction Market contract.
 
 Once the contract has been deployed, anyone can call `initializeMarket()` after approving the optional `reward` amount to be paid to the wallet that runs the assertion.
 
@@ -85,13 +85,13 @@ To create a new market, the `initializeMarket()` function is called with the fol
 * `reward`: The amount of currency (in Wei) that will be available as a reward for the user that runs that creates the assertion in the OOV3, necessary to settle the market once it's ready.
 * `requiredBond`: The amount of currency (in Wei) that users must bond to assert the outcome of the event.
 
-Once the input checks are passed, the function creates two new ERC20 tokens (one for each outcome) using the `ExpandedERC20` contract, which extends the standard ERC20 contract by adding the ability to mint and burn tokens. The PredictionMarket is assigned the minter and burner roles to simplify how the outcome tokens handled when creating, redeeming or settling the tokens.
+Once the input checks are passed, the function creates two new ERC20 tokens (one for each outcome) using the `ExpandedERC20` contract, which extends the standard ERC20 contract by adding the ability to mint and burn tokens. The Prediction Market is assigned the minter and burner roles to simplify how the outcome tokens handled when creating, redeeming or settling the tokens.
 
 The `Market` is then created and stored internally associated to a `marketId` returned by the `initializeMarket()` and emitted in the `MarketInitialized` event at the end of the process together with the parameters defining the market.
 
 #### Create outcome tokens
 
-The `createOutcomeTokens` function mints a pair of tokens representing the value of outcome1 and outcome2 for a given market identified by `marketId`. This allows participants to trade on the outcome of the market by exchanging these tokens with each other outside of the scope of the `PredictionMarket` contract.
+The `createOutcomeTokens` function mints a pair of tokens representing the value of outcome1 and outcome2 for a given market identified by `marketId`. This allows participants to trade on the outcome of the market by exchanging these tokens with each other outside of the scope of the Prediction Market contract.
 
 The `createOutcomeTokens` function takes two parameters:
 
@@ -204,7 +204,7 @@ export OOV3_ADDRESS=$(cast call $FINDER_ADDRESS "getImplementationAddress(bytes3
 export DEFAULT_CURRENCY_ADDRESS=$(cast call $OOV3_ADDRESS "defaultCurrency()(address)")
 ```
 
-We are ready to deploy the `PredictionMarket` contract with the following command:
+We are ready to deploy the Prediction Market contract with the following command:
 
 ```bash
 export PREDICTION_MARKET_ADDRESS=$(forge create src/PredictionMarket.sol:PredictionMarket \
